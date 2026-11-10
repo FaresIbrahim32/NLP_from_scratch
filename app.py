@@ -110,7 +110,6 @@ with st.sidebar:
     min_token_length = st.slider("Minimum token length", 1, 8, 2)
     top_terms = st.slider("Topic terms per segment", 2, 8, 3)
     max_features = st.slider("Maximum vocabulary size", 100, 5000, 1500, step=100)
-    use_bigrams = st.checkbox("Include two-word phrases", value=True)
 
 if not uploaded_file:
     st.info("Upload a .txt file in the sidebar to begin.")
@@ -128,7 +127,6 @@ if not uploaded_file:
 
 try:
     raw_text = uploaded_file.getvalue().decode("utf-8", errors="replace")
-    ngram_range = (1, 2) if use_bigrams else (1, 1)
     global_df, segment_df, vectorizer = analyze(
         raw_text,
         split_mode,
@@ -136,7 +134,7 @@ try:
         remove_stopwords,
         min_token_length,
         max_features,
-        ngram_range,
+        (1, 1),
         top_terms,
     )
 except ValueError as error:
