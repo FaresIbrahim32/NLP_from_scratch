@@ -11,6 +11,11 @@ import pandas as pd
 import streamlit as st
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS, TfidfVectorizer
 
+MIN_WORDS_PER_SEGMENT = 3
+MIN_TOKEN_LENGTH = 2
+TOP_TERMS_PER_SEGMENT = 3
+MAX_VOCABULARY = 1500
+
 
 st.set_page_config(
     page_title="Text Topic Explorer",
@@ -31,7 +36,8 @@ def split_into_segments(text: str, mode: str, min_words: int) -> list[str]:
 
 def clean_text(text: str, remove_stopwords: bool, min_token_length: int) -> str:
     """Lowercase and retain word-like tokens for TF-IDF."""
-    tokens = re.findall(r"[a-zA-Z][a-zA-Z'-]*", text.lower())
+    tokens = [re.sub(r"^[^a-zA-Z]+|[^a-zA-Z'-]+$", "", token) for token in re.split(r"\s+", text.lower().strip())]
+    tokens = [token for token in tokens if token]
     if remove_stopwords:
         tokens = [t for t in tokens if t not in ENGLISH_STOP_WORDS]
     tokens = [t.strip("'-") for t in tokens if len(t.strip("'-")) >= min_token_length]
@@ -105,11 +111,6 @@ with st.sidebar:
     st.header("Analysis settings")
     uploaded_file = st.file_uploader("Upload a .txt file", type=["txt"])
     split_mode = st.radio("Analyze by", ["Paragraphs", "Sentences"], index=0)
-    min_words = st.slider("Minimum words per segment", 1, 30, 3)
-    remove_stopwords = st.checkbox("Remove common stopwords", value=True)
-    min_token_length = st.slider("Minimum token length", 1, 8, 2)
-    top_terms = st.slider("Topic terms per segment", 2, 8, 3)
-    max_features = st.slider("Maximum vocabulary size", 100, 5000, 1500, step=100)
 
 if not uploaded_file:
     st.info("Upload a .txt file in the sidebar to begin.")
@@ -130,12 +131,12 @@ try:
     global_df, segment_df, vectorizer = analyze(
         raw_text,
         split_mode,
-        min_words,
-        remove_stopwords,
-        min_token_length,
-        max_features,
+        MIN_WORDS_PER_SEGMENT,
+        True,
+        MIN_TOKEN_LENGTH,
+        MAX_VOCABULARY,
         (1, 1),
-        top_terms,
+        TOP_TERMS_PER_SEGMENT,
     )
 except ValueError as error:
     st.error(str(error))
